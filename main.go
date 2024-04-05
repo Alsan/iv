@@ -17,6 +17,9 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
+	"github.com/gen2brain/avif"
+
+	"github.com/gen2brain/heic"
 	"github.com/xo/resvg"
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
@@ -136,7 +139,7 @@ func open(name string) ([]string, error) {
 	return v, nil
 }
 
-var extRE = regexp.MustCompile(`(?i)\.(jpe?g|gif|png|svg|bmp|bitmap|tiff?|hei[vc]|webp)$`)
+var extRE = regexp.MustCompile(`(?i)\.(jpe?g|gif|png|svg|bmp|bitmap|tiff?|hei[vc]|avif|webp)$`)
 
 func render(w io.Writer, files []string) error {
 	for i := 0; i < len(files); i++ {
@@ -165,9 +168,10 @@ func renderFile(w io.Writer, file string) error {
 	return rasterm.Encode(w, img)
 }
 
-/*
 func init() {
-	_ "github.com/jcbritobr/pnm"
-	image.RegisterFormat("pbm", "P?", Decode, DecodeConfig)
+	// _ "github.com/jcbritobr/pnm"
+	// image.RegisterFormat("pbm", "P?", Decode, DecodeConfig)
+
+	image.RegisterFormat("heic", "heic", heic.Decode, heic.DecodeConfig)
+	image.RegisterFormat("avif", "avif", avif.Decode, avif.DecodeConfig)
 }
-*/
