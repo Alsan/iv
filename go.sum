@@ -1,3 +1,5 @@
+github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966 h1:lTG4HQym5oPKjL7nGs+csTgiDna685ZXjxijkne828g=
+github.com/BurntSushi/graphics-go v0.0.0-20160129215708-b43f31a4a966/go.mod h1:Mid70uvE93zn9wgF92A/r5ixgnvX8Lh68fxp9KQBaI0=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/ebitengine/purego v0.6.1 h1:sjN8rfzbhXQ59/pE+wInswbU9aMDHiwlup4p/a07Mkg=
 github.com/ebitengine/purego v0.6.1/go.mod h1:ah1In8AOtksoNK6yk5z1HTJeUkC1Ez4Wk2idgGslMwQ=
@@ -15,6 +17,8 @@ github.com/kenshaw/snaker v0.2.0 h1:DPlxCtAv9mw1wSsvIN1khUAPJUIbFJUckMIDWSQ7TC8=
 github.com/kenshaw/snaker v0.2.0/go.mod h1:DNyRUqHMZ18/zioxr6R7m4kSxxf2+QmB0BXoORsXRaY=
 github.com/mattn/go-sixel v0.0.5 h1:55w2FR5ncuhKhXrM5ly1eiqMQfZsnAHIpYNGZX03Cv8=
 github.com/mattn/go-sixel v0.0.5/go.mod h1:h2Sss+DiUEHy0pUqcIB6PFXo5Cy8sTQEFr3a9/5ZLNw=
+github.com/mattn/go-sixel/cmd/gosr v0.0.5 h1:xs8ZxghAvWcSkLojkxFz499+4RxZx6MtqBef0cjyFiY=
+github.com/mattn/go-sixel/cmd/gosr v0.0.5/go.mod h1:kBuR5FkaPa9AKCenyy4RHV/UfUFzN/9sZHwL6LNYllQ=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/soniakeys/quant v1.0.0 h1:N1um9ktjbkZVcywBVAAYpZYSHxEfJGzshHCxx/DaI0Y=
 github.com/soniakeys/quant v1.0.0/go.mod h1:HI1k023QuVbD4H8i9YdfZP2munIHU4QpjsImz6Y6zds=
