@@ -8,18 +8,17 @@ import (
 	"image"
 	"image/color"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"time"
 
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 
 	"github.com/gen2brain/avif"
-	"github.com/mattn/go-sixel"
 
 	"github.com/gen2brain/heic"
 	"github.com/xo/resvg"
@@ -154,16 +153,16 @@ func render(w io.Writer, files []string) error {
 
 // doFile renders the specified file to w.
 func renderFile(w io.Writer, file string) error {
-	// defer duration(track("renderFile"))
+	defer duration(track("renderFile"))
 	fmt.Fprintln(w, file+":")
 	f, err := os.OpenFile(file, os.O_RDONLY, 0)
 	if err != nil {
 		return fmt.Errorf("can't open %s: %w", file, err)
 	}
-	// s := time.Now()
+	s := time.Now()
 	img, _, err := image.Decode(f)
-	// d := time.Since(s)
-	// fmt.Printf("decode: %v\n", d)
+	d := time.Since(s)
+	fmt.Printf("decode: %v\n", d)
 	if err != nil {
 		defer f.Close()
 		return fmt.Errorf("can't decode %s: %w", file, err)
@@ -172,13 +171,12 @@ func renderFile(w io.Writer, file string) error {
 		return fmt.Errorf("can't close %s: %w", file, err)
 	}
 
-	// s = time.Now()
-	// fmt.Println(img.Bounds().Max)
-	if e := sixel.NewEncoder(w).Encode(img); e != nil {
-		log.Fatalln(err)
-	}
-	// d = time.Since(s)
-	// fmt.Printf("draw: %v\n", d)
+	s = time.Now()
+	fmt.Println(img.Bounds().Max)
+	// e := sixel.NewEncoder(w).Encode(img)
+	// e := rasterm.Encode(w, img)
+	d = time.Since(s)
+	fmt.Printf("draw: %v\n", d)
 
 	return err
 }
@@ -191,10 +189,10 @@ func init() {
 	image.RegisterFormat("avif", "avif", avif.Decode, avif.DecodeConfig)
 }
 
-// func track(msg string) (string, time.Time) {
-// 	return msg, time.Now()
-// }
+func track(msg string) (string, time.Time) {
+	return msg, time.Now()
+}
 
-// func duration(msg string, start time.Time) {
-// 	fmt.Printf("%s: %v\n", msg, time.Since(start))
-// }
+func duration(msg string, start time.Time) {
+	fmt.Printf("%s: %v\n", msg, time.Since(start))
+}
