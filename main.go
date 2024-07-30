@@ -3,9 +3,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"image"
 	"image/color"
 	"io"
 	"os"
@@ -15,17 +15,15 @@ import (
 	"time"
 
 	_ "image/gif"
-	_ "image/jpeg"
+	"image/jpeg"
 	_ "image/png"
 
-	"github.com/gen2brain/avif"
-
-	"github.com/gen2brain/heic"
 	"github.com/xo/resvg"
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
 	_ "golang.org/x/image/webp"
 
+	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/kenshaw/colors"
 	"github.com/kenshaw/rasterm"
 	"github.com/spf13/cobra"
@@ -34,9 +32,17 @@ import (
 var (
 	name    = "iv"
 	version = "0.0.0-dev"
+	verbose bool
 )
 
 func main() {
+	vips.LoggingSettings(func(domain string, level vips.LogLevel, msg string) {
+		fmt.Println(domain, level, msg)
+	}, vips.LogLevelError)
+
+	vips.Startup(nil)
+	defer vips.Shutdown()
+
 	if err := run(context.Background(), name, version, os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
@@ -90,6 +96,7 @@ func run(ctx context.Context, name, version string, cliargs []string) error {
 	flags.BoolVar(&fishCompletion, "completion-script-fish", false, "output fish completion script and exit")
 	flags.BoolVar(&powershellCompletion, "completion-script-powershell", false, "output powershell completion script and exit")
 	flags.BoolVar(&noDescriptions, "no-descriptions", false, "disable descriptions in completion scripts")
+	flags.BoolVar(&verbose, "verbose", false, "verbose output")
 	// mark hidden
 	for _, name := range []string{
 		"completion-script-bash", "completion-script-zsh", "completion-script-fish",
@@ -143,7 +150,16 @@ func open(name string) ([]string, error) {
 var extRE = regexp.MustCompile(`(?i)\.(jpe?g|gif|png|svg|bmp|bitmap|tiff?|hei[vc]|avif|webp)$`)
 
 func render(w io.Writer, files []string) error {
-	for i := 0; i < len(files); i++ {
+	l := len(files)
+	if l == 1 {
+		if err := renderFile(w, files[0]); err != nil {
+			fmt.Fprintf(w, "error: unable to render: %v\n", err)
+		}
+		return nil
+	}
+
+	for i := 0; i < l; i++ {
+		fmt.Fprintln(w, files[i]+":")
 		if err := renderFile(w, files[i]); err != nil {
 			fmt.Fprintf(w, "error: unable to render arg %d: %v\n", i, err)
 		}
@@ -154,39 +170,47 @@ func render(w io.Writer, files []string) error {
 // doFile renders the specified file to w.
 func renderFile(w io.Writer, file string) error {
 	defer duration(track("renderFile"))
-	fmt.Fprintln(w, file+":")
-	f, err := os.OpenFile(file, os.O_RDONLY, 0)
-	if err != nil {
-		return fmt.Errorf("can't open %s: %w", file, err)
-	}
+
 	s := time.Now()
-	img, _, err := image.Decode(f)
-	d := time.Since(s)
-	fmt.Printf("decode: %v\n", d)
+	imgref, err := vips.NewImageFromFile(file)
 	if err != nil {
-		defer f.Close()
 		return fmt.Errorf("can't decode %s: %w", file, err)
 	}
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("can't close %s: %w", file, err)
-	}
+	defer imgref.Close()
+	duration("read from file", s)
 
 	s = time.Now()
-	fmt.Println(img.Bounds().Max)
-	// e := sixel.NewEncoder(w).Encode(img)
-	// e := rasterm.Encode(w, img)
-	d = time.Since(s)
-	fmt.Printf("draw: %v\n", d)
+	ep := vips.NewJpegExportParams()
+	ep.StripMetadata = true
+	ep.Quality = 75
+	ep.Interlace = true
+	ep.OptimizeCoding = true
+	ep.SubsampleMode = vips.VipsForeignSubsampleAuto
+	ep.TrellisQuant = true
+	ep.OvershootDeringing = true
+	ep.OptimizeScans = true
+	ep.QuantTable = 3
 
-	return err
-}
+	buf, _, err := imgref.ExportJpeg(ep)
+	if err != nil {
+		return fmt.Errorf("can't export %s: %w", file, err)
+	}
+	duration("export to byte buffer", s)
 
-func init() {
-	// _ "github.com/jcbritobr/pnm"
-	// image.RegisterFormat("pbm", "P?", Decode, DecodeConfig)
+	s = time.Now()
+	img, err := jpeg.Decode(bytes.NewBuffer(buf))
+	if err != nil {
+		return fmt.Errorf("can't decode %s: %w", file, err)
+	}
+	duration("decode as go image", s)
 
-	image.RegisterFormat("heic", "heic", heic.Decode, heic.DecodeConfig)
-	image.RegisterFormat("avif", "avif", avif.Decode, avif.DecodeConfig)
+	s = time.Now()
+	if err := rasterm.Encode(w, img); err != nil {
+		return fmt.Errorf("can't encode %s: %w", file, err)
+	}
+	duration("encode as rasterm image", s)
+
+	return nil
 }
 
 func track(msg string) (string, time.Time) {
@@ -194,5 +218,7 @@ func track(msg string) (string, time.Time) {
 }
 
 func duration(msg string, start time.Time) {
-	fmt.Printf("%s: %v\n", msg, time.Since(start))
+	if verbose {
+		fmt.Printf("%s: %v\n", msg, time.Since(start))
+	}
 }
